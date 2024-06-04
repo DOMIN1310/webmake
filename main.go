@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"log"
-	b "webmake/builds"
+	b "github.com/DOMIN1310/webmake/builds"
 )
 
 func main(){

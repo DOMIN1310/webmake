@@ -11,7 +11,7 @@ import (
 	"os/exec"
 	"path"
 	"strconv"
-	v "webmake/vars"
+	v "github.com/DOMIN1310/webmake/vars"
 )
 
 func Search(ch chan string, property string, dir string){
