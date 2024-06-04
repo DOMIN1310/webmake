@@ -1,7 +1,6 @@
 package vars
 
 type Template struct{
-	Dir string `json:"dir"`;
 	Findex string `json:"findex"`;
 	Tmplindex string `json:"tmplindex"`;
 	Styleindex string `json:"styleindex"`;
