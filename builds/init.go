@@ -7,21 +7,78 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
 	"strconv"
+
 	v "github.com/DOMIN1310/webmake/vars"
 )
 
 func Search(ch chan string, property string, dir string){
 	switch property{
 	case "index.ts":
-		
+		exec.Command("/bin/bash", "tsc", "--init");
+		if req, err := http.NewRequest(
+			"GET",
+			"https://raw.githubusercontent.com/DOMIN1310/webmake/master/res/tsconfig.json",
+			nil,
+		); err != nil {
+			log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, err.Error());
+		} else {
+			if res, err := http.DefaultClient.Do(req); err != nil {
+				log.Fatalf("%v:%v%v\n", v.ERROR, v.ERROR, err.Error());
+			} else {
+				if buffer, err := io.ReadAll(res.Body); err != nil {
+					log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, err.Error());
+				} else {
+					if err := os.Mkdir("ts", 0744); err != nil {
+						log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "could not create ts directory");
+					} else {
+						if err := os.WriteFile("ts/tsconfig.json", buffer, 0744); err != nil{
+							log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "could not create and overwrite ts/tsconfig.json");
+						} else {
+							log.Printf("%v:%v%v\n", v.SUCCESS, v.RESET, "successfully created and overwritten ts/tsconfig.json");
+						}
+					}
+				}
+			}
+		}
 	case "tailwindutils.css":
-		exec.Command("/bin/bash", "res/runners/tailwindinstall.sh")
+		exec.Command("/bin/bash", "npm", "install", "-D", "tailwindcss");
+		if req, err := http.NewRequest(
+				"GET", 
+				"https://raw.githubusercontent.com/DOMIN1310/webmake/master/res/tailwind.config.js",
+				nil,
+			); err != nil{
+				log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, err.Error());
+			} else {
+				if res, err := http.DefaultClient.Do(req); err != nil {
+					log.Fatalf("%v:%v%v\n", v.ERROR, v.ERROR, err.Error());
+				} else {
+					if buffer, err := io.ReadAll(res.Body); err != nil {
+						log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, err.Error());
+					} else {
+						if err := os.WriteFile("tailwind.config.js", buffer, 0744); err != nil{
+							log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "could not create and overwrite tailwind.config.js");
+						} else {
+							log.Printf("%v:%v%v\n", v.SUCCESS, v.RESET, "successfully created and overwritten tailwind.config.js");
+						}
+					}
+				}
+			}
 	case "main.scss":
-
+		exec.Command("/bin/bash", "npm", "install", "sass", "--save-dev");
+		if err := os.Mkdir("sass", 0744); err != nil {
+			log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "could not install sass");
+		} else {
+			if _, err := os.Create("./sass/main.scss"); err != nil {
+				log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "error while creating main.scss");
+			} else {
+				log.Printf("%v:%v%v\n", v.SUCCESS, v.RESET, "successfully initialized sass");
+			}
+		}
 	default:
 		_, err := os.Create(path.Join(dir, property));
 		if err != nil{
@@ -66,6 +123,7 @@ func createWeb() error{
 				var chfile chan string;
 				var ctx, deadline = context.WithCancel(context.Background())
 				defer deadline();
+				exec.Command("/bin/bash", "npm", "init");
 				err := os.Mkdir(conf.Dir, 0755);
 				if err != nil {
 					log.Fatalf("%v:%v%v", v.ERROR, v.RESET, "error while creating the app directory!");
