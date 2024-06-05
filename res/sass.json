@@ -1,6 +1,0 @@
-{
-  "scripts": {
-    "build": "sass src/styles.scss dist/styles.css",
-    "watch": "sass --watch src/styles.scss dist/styles.css"
-  }
-}

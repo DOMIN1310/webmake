@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	v "github.com/DOMIN1310/webmake/vars"
@@ -19,11 +19,11 @@ import (
 
 func Search(ch chan string, property string, ctx context.Context){
 	switch property{
-	case "index.ts":
+	case "ts/index.ts":
 		var url string = "https://raw.githubusercontent.com/DOMIN1310/webmake/master/res/tsconfig.json";
 		PrepareComponent(ch, "ts", map[string]string{property: ""}, ctx);
-		PrepareComponent(ch, "./ts", GetURLBody(url, ctx, "GET", property), ctx);
-	case "tailwindutils.css":
+		PrepareComponent(ch, "./", GetURLBody(url, ctx, "GET", property), ctx);
+	case "css/tailwindutils.css":
 		if err := Cmd(func() *exec.Cmd {
 			return exec.Command("pnpm", "install", "-D", "tailwindcss")
 		}()); err != nil{
@@ -32,11 +32,11 @@ func Search(ch chan string, property string, ctx context.Context){
 			log.Printf("%v:%v%v\n", v.INIT, v.RESET, "successfully initialized tailwindcss");
 		}
 		var url string = "https://raw.githubusercontent.com/DOMIN1310/webmake/master/res/tailwind.config.js";
-		PrepareComponent(ch, "./", GetURLBody(url, ctx, "GET", property), ctx);
+		PrepareComponent(ch, "./", GetURLBody(url, ctx, "GET", "tailwind.config.js"), ctx);
 		PrepareComponent(ch, "css", map[string]string{
-			"tailwind.css": "@tailwind base;\n@tailwind components;\n@tailwind utilities;",
+			property: "@tailwind base;\n@tailwind components;\n@tailwind utilities;",
 		}, ctx);
-	case "main.scss":
+	case "sass/main.scss":
 		if err := Cmd(func() *exec.Cmd{
 			return exec.Command("pnpm", "install", "sass", "--save-dev");
 		}()); err != nil {
@@ -49,16 +49,16 @@ func Search(ch chan string, property string, ctx context.Context){
 		}
 	default:
 		PrepareComponent(ch, func () string {
-			if property == "main.css" {
+			if property == "css/main.css" {
 				return "css";
-			} else if property == "index.js" {
+			} else if property == "js/index.js" {
 				return "js";
 			} else {
 				return "public";
 			}
 		}(), func () map[string]string {
-			if property == "index.html" || property == "index.php" {
-				var url string = fmt.Sprintf("https://raw.githubusercontent.com/DOMIN1310/webmake/master/res/%v", property);
+			if property == "public/index.html" || property == "public/index.php" {
+				var url string = fmt.Sprintf("https://raw.githubusercontent.com/DOMIN1310/webmake/master/res/%v", strings.Split(property, "/")[1]);
 				return GetURLBody(url, ctx, "GET", property);
 			} else {
 				return map[string]string{property: ""};
@@ -93,21 +93,23 @@ func GetURLBody(url string, ctx context.Context, method string, file string) map
 
 func PrepareComponent(delch chan string, dirName string, files map[string]string, ctx context.Context) {
 	if dirName != "./" {
-		if _, err := os.Stat(dirName); os.IsNotExist(err) {
-			if err := os.Mkdir(dirName, 0755); err != nil {
-				log.Printf("%v:%v%v\n", v.WARN, v.RESET, "unable to create " + dirName + " directory");
+    if _, err := os.Stat(dirName); err != nil {
+			if os.IsNotExist(err) {
+				if err := os.Mkdir(dirName, 0755); err != nil {
+					log.Printf("%v:%v%v\n", v.WARN, v.RESET, "unable to create " + dirName + " directory")
+				} else {
+					log.Printf("%v:%v%v\n", v.CREATION, v.RESET, "successfully created " + dirName);
+				}
+			} else {
+				log.Printf("%v:%v%v\n", v.ERROR, v.RESET, "unable to check if directory exists or not!")
+				return
 			}
-		} else if err != nil {
-			log.Printf("%v:%v%v\n", v.ERROR, v.RESET, "unable to check if directory exists or not!");
-			return;
-		} else if ctx.Err() != nil {
-			log.Printf("%v:%v%v", v.ERROR, v.RESET, "context error!! unable to reach the code further!");
-		} else {
-			log.Printf("%v:%v%v\n", v.WARN, v.RESET, "directory already exists");
-		}
+    } else if ctx.Err() != nil {
+			log.Printf("%v:%v%v", v.ERROR, v.RESET, "context error!! unable to reach the code further!")
+    }
 	}
 	for fileName, content := range files {
-		if err := os.WriteFile(path.Join(dirName, fileName), []byte(content), 0755); err != nil {
+		if err := os.WriteFile(fileName, []byte(content), 0755); err != nil {
 			log.Printf("%v:%v%v\n", v.WARN, v.RESET, "could not create " + fileName);
 		} else {
 			if delch != nil {
@@ -115,11 +117,10 @@ func PrepareComponent(delch chan string, dirName string, files map[string]string
 			}
 		}
 	}
-
 }
 
 func Cmd(f *exec.Cmd) error {
-	if _, err := f.Output(); err != nil {
+	if err := f.Run(); err != nil {
 		return errors.New("incorrect command");
 	} else {
 		return nil;
@@ -137,7 +138,7 @@ func createWeb() error{
 		} else {
 			var conf v.Template;
 			if err := json.Unmarshal(confBuffer, &conf); err != nil {
-				return errors.New("marshalation error");
+				return errors.New("unmarshalation error");
 			} else {
 				var chfile chan string = make(chan string, 96);
 				var ctx, deadline = context.WithDeadline(context.Background(), time.Now().Add(10*time.Second));
@@ -210,19 +211,24 @@ func InitPackage() {
 		git = b;
 	}
 	if style == "basic" {
-		style = "main.css";
+		style = "css/main.css";
 	} else if style == "scss" {
-		style = "main.scss";	
+		style = "sass/main.scss";	
 	} else if style == "tailwind" {
-		style = "tailwindutils.css";
+		style = "css/tailwindutils.css";
+	}
+	if flang == "ts" {
+		flang = "ts/index.ts"
+	} else if flang == "js" {
+		flang = "js/index.js"
 	}
 	//marshal data
-	var buffer, err = json.Marshal(&v.Template{
-		Findex: "index." + flang,
+	var buffer, err = json.MarshalIndent(&v.Template{
+		Findex: flang,
 		Styleindex: style,
-		Tmplindex: "index." + tmpl,
+		Tmplindex: "public/index." + tmpl,
 		Git: git,
-	});
+	}, "", "  ");
 	//check if marshaling was successful
 	if err != nil{
 		log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, err.Error());
@@ -230,5 +236,9 @@ func InitPackage() {
 		log.Printf("%v:%v%v\n", v.SUCCESS, v.RESET, "Marshaling was successful!");
 	}
 	PrepareComponent(nil, "./", map[string]string{"wb-package.json": string(buffer)}, nil)
-	createWeb();
+	if err := createWeb(); err != nil {
+		log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "UNABLE TO INITILIAZE THE PROJECT")
+	} else {
+		log.Printf("%v:%v%v\n", v.DONE, v.RESET, "INITIALIZATION DONE!");
+	}
 }
