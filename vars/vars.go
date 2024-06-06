@@ -9,7 +9,7 @@ type Template struct{
 }
 
 type Scripts struct{
-	Scripts map[string]map[string]string `json:"scripts"`;
+	Scripts map[string]map[string]string;
 }
 
 var (

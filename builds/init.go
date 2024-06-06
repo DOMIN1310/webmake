@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
+	g "github.com/DOMIN1310/webmake/getters"
 	v "github.com/DOMIN1310/webmake/vars"
 )
 
@@ -24,7 +24,7 @@ func Search(ch chan string, property string, ctx context.Context){
 		PrepareComponent(ch, "ts", map[string]string{property: ""}, ctx);
 		PrepareComponent(ch, "./", GetURLBody(url, ctx, "GET", property), ctx);
 	case "css/tailwindutils.css":
-		if err := Cmd(func() *exec.Cmd {
+		if err := g.Cmd(func() *exec.Cmd {
 			return exec.Command("pnpm", "install", "-D", "tailwindcss")
 		}()); err != nil{
 			log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, err.Error());
@@ -37,7 +37,7 @@ func Search(ch chan string, property string, ctx context.Context){
 			property: "@tailwind base;\n@tailwind components;\n@tailwind utilities;",
 		}, ctx);
 	case "sass/main.scss":
-		if err := Cmd(func() *exec.Cmd{
+		if err := g.Cmd(func() *exec.Cmd{
 			return exec.Command("pnpm", "install", "sass", "--save-dev");
 		}()); err != nil {
 			log.Printf("%v:%v%v\n", v.WARN, v.RESET, err.Error());
@@ -121,14 +121,6 @@ func PrepareComponent(delch chan string, dirName string, files map[string]string
 	}
 }
 
-func Cmd(f *exec.Cmd) error {
-	if err := f.Run(); err != nil {
-		return errors.New("incorrect command");
-	} else {
-		return nil;
-	}
-}
-
 func createWeb(ctx context.Context) error{
 	if confFile, err := os.Open("wb-package.json"); err != nil{
 		return errors.New("could not open wb-package.json, ensure it exists");	
@@ -143,7 +135,7 @@ func createWeb(ctx context.Context) error{
 				return errors.New("unmarshalation error");
 			} else {
 				var chfile chan string = make(chan string, 96);
-				if err := Cmd(func() *exec.Cmd{
+				if err := g.Cmd(func() *exec.Cmd{
 					return exec.Command("pnpm", "init");
 				}()); err != nil {
 					log.Printf("%v:%v%v\n", v.WARN, v.RESET, err.Error());
@@ -151,7 +143,7 @@ func createWeb(ctx context.Context) error{
 					log.Printf("%v:%v%v\n", v.INIT, v.RESET, "successfully initialized package.json");
 				}
 				if conf.Git {
-					if err := Cmd(func () *exec.Cmd {
+					if err := g.Cmd(func () *exec.Cmd {
 						return exec.Command("git", "init");
 					}()); err != nil {
 						log.Printf("%v:%v%v\n", v.ERROR, v.RESET, "unable to initialize git ensure u have git installed");
@@ -175,36 +167,6 @@ func createWeb(ctx context.Context) error{
 		}
 	}
 	return nil;
-}
-
-func GetScripts(ctx context.Context) v.Scripts {
-	if req, err := http.NewRequestWithContext(
-		ctx, 
-		"GET", 
-		"https://raw.githubusercontent.com/DOMIN1310/webmake/master/res/scripts.json",
-		nil,
-	); err != nil {
-		log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "unable to get scripts request");
-		return v.Scripts{};		
-	} else {
-		if res, err := http.DefaultClient.Do(req); err != nil {
-			log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "unable to get response from the request to get scripts");
-			return v.Scripts{};
-		} else {
-			if buffer, err := io.ReadAll(res.Body); err != nil {
-				log.Printf("%v:%v%v\n", v.ERROR, v.RESET, "unable to read response");
-				return v.Scripts{};
-			} else {
-				var variable v.Scripts;
-				if err := json.Unmarshal(buffer, &variable); err != nil {
-					log.Printf("%v:%v%v\n", v.ERROR, v.RESET, "unable to marshal data");
-					return v.Scripts{};
-				} else {
-					return variable;
-				}
-			}
-		}
-	}
 }
 
 func InitPackage() {
@@ -254,16 +216,16 @@ func InitPackage() {
 	}
 	var ctx, deadline = context.WithDeadline(context.Background(), time.Now().Add(10*time.Second));
 	defer deadline();
-	scripts := GetScripts(ctx);
+	scripts := g.GetScripts(ctx);
 	if buffer, err := json.MarshalIndent(&v.Template{
 		Findex: flang,
 		Styleindex: style,
 		Tmplindex: "public/index." + tmpl,
 		Git: git,
+		Scripts: scripts,
 	}, "", "  "); err != nil {
 		log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "unable to marshal wb-package.json with scripts!");
 	} else {
-		log.Println(scripts);
 		log.Printf("%v:%v%v\n", v.SUCCESS, v.RESET, "Marshaling was successful!");
 		PrepareComponent(nil, "./", map[string]string{"wb-package.json": string(buffer)}, nil)
 		if err := createWeb(ctx); err != nil {

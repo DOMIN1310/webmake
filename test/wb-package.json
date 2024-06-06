@@ -4,6 +4,19 @@
   "styleindex": "sass/main.scss",
   "git": false,
   "Scripts": {
-    "scripts": null
+    "Scripts": {
+      "sass": {
+        "build": "npx sass sass/main.scss css/main.css",
+        "watch": "npx sass --watch sass/main.scss css/main.css"
+      },
+      "tailwind": {
+        "build": "npx tailwindcss build css/tailwindutils.css -o css/main.css",
+        "watch": "npx tailwindcss build css/tailwindutils.css -o css/main.css --watch"
+      },
+      "typescript": {
+        "build": "npx tsc",
+        "watch": "npx tsc --watch"
+      }
+    }
   }
 }
