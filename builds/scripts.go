@@ -6,6 +6,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
+	"strings"
 
 	g "github.com/DOMIN1310/webmake/getters"
 	v "github.com/DOMIN1310/webmake/vars"
@@ -35,6 +37,17 @@ func Readwebmakepackage(ctx context.Context) g.Scripts {
 
 func RunScript(ctx context.Context, arg string) {
 	var scripts g.Scripts = Readwebmakepackage(ctx);
-	log.Println(scripts);
-	log.Println(arg);
+	var catNVal []string  = strings.Split(arg, ":");
+	var command []string = strings.Split(scripts[catNVal[0]][catNVal[1]], " ");
+	if ctx.Err() != nil {
+		log.Printf("%v:%v%v", v.ERROR, v.RESET, "context error!! unable to reach the code further!")
+	} else{
+	if err := g.Cmd(func () *exec.Cmd {
+		return exec.Command(command[0], command[1:]...);
+	}()); err != nil {
+		log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "unable to run the command wrong arguments");
+	} else {
+		log.Printf("%v:%v%v\n", v.DONE, v.RESET, "command ran");
+	}
+	}
 }
