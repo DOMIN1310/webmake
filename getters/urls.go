@@ -40,3 +40,29 @@ func GetScripts(ctx context.Context) v.Scripts {
 		}
 	}
 }
+
+func GetURLBody(url string, ctx context.Context, method string, file string) map[string]string {
+	if req, err := http.NewRequestWithContext(ctx, method, url, nil); err != nil {
+		log.Printf("%v:%v%v\n", v.WARN, v.RESET, "unable to get any request within context and destiny url");
+		return map[string]string{file: ""};	
+	} else if ctx.Err() != nil {
+		log.Printf("%v:%v%v\n", v.WARN, v.RESET, "unable to complete request: context error")
+		return map[string]string{file: ""};
+	} else {
+		if res, err := http.DefaultClient.Do(req); err != nil {
+			res.Body.Close();
+			log.Printf("%v:%v%v\n", v.WARN, v.RESET, "unable to complete request with proper response");
+			return map[string]string{file: ""};
+		} else {
+			defer res.Body.Close();
+			if buffer, err := io.ReadAll(res.Body); err != nil {
+				log.Printf("%v:%v%v\n", v.WARN, v.RESET, "unable to read response body!");
+				return map[string]string{file: ""};
+			} else {
+				return map[string]string{
+					file: string(buffer),
+				}
+			}						
+		}
+	}
+}
