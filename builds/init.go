@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	g "github.com/DOMIN1310/webmake/getters"
 	v "github.com/DOMIN1310/webmake/vars"
 )
@@ -21,8 +22,8 @@ func Search(ch chan string, property string, ctx context.Context){
 	switch property{
 	case "ts/index.ts":
 		var url string = "https://raw.githubusercontent.com/DOMIN1310/webmake/master/res/tsconfig.json";
-		PrepareComponent(ch, "ts", map[string]string{property: ""}, ctx);
-		PrepareComponent(ch, "./", GetURLBody(url, ctx, "GET", property), ctx);
+		g.PrepareComponent(ch, "ts", map[string]string{property: ""}, ctx);
+		g.PrepareComponent(ch, "./", GetURLBody(url, ctx, "GET", property), ctx);
 	case "css/tailwindutils.css":
 		if err := g.Cmd(func() *exec.Cmd {
 			return exec.Command("pnpm", "install", "-D", "tailwindcss")
@@ -32,8 +33,8 @@ func Search(ch chan string, property string, ctx context.Context){
 			log.Printf("%v:%v%v\n", v.INIT, v.RESET, "successfully initialized tailwindcss");
 		}
 		var url string = "https://raw.githubusercontent.com/DOMIN1310/webmake/master/res/tailwind.config.js";
-		PrepareComponent(ch, "./", GetURLBody(url, ctx, "GET", "tailwind.config.js"), ctx);
-		PrepareComponent(ch, "css", map[string]string{
+		g.PrepareComponent(ch, "./", GetURLBody(url, ctx, "GET", "tailwind.config.js"), ctx);
+		g.PrepareComponent(ch, "css", map[string]string{
 			property: "@tailwind base;\n@tailwind components;\n@tailwind utilities;",
 		}, ctx);
 	case "sass/main.scss":
@@ -43,12 +44,12 @@ func Search(ch chan string, property string, ctx context.Context){
 			log.Printf("%v:%v%v\n", v.WARN, v.RESET, err.Error());
 		} else {
 			log.Printf("%v:%v%v\n", v.INIT, v.RESET, "successfully initialized sass");
-			PrepareComponent(ch, "sass", map[string]string{
+			g.PrepareComponent(ch, "sass", map[string]string{
 				property: "",
 			}, ctx);
 		}
 	default:
-		PrepareComponent(ch, func () string {
+		g.PrepareComponent(ch, func () string {
 			if property == "css/main.css" {
 				return "css";
 			} else if property == "js/index.js" {
@@ -89,34 +90,6 @@ func GetURLBody(url string, ctx context.Context, method string, file string) map
 					file: string(buffer),
 				}
 			}						
-		}
-	}
-}
-
-func PrepareComponent(delch chan string, dirName string, files map[string]string, ctx context.Context) {
-	if dirName != "./" {
-    if _, err := os.Stat(dirName); err != nil {
-			if os.IsNotExist(err) {
-				if err := os.Mkdir(dirName, 0755); err != nil {
-					log.Printf("%v:%v%v\n", v.WARN, v.RESET, "unable to create " + dirName + " directory")
-				} else {
-					log.Printf("%v:%v%v\n", v.CREATION, v.RESET, "successfully created " + dirName);
-				}
-			} else {
-				log.Printf("%v:%v%v\n", v.ERROR, v.RESET, "unable to check if directory exists or not!")
-				return
-			}
-    } else if ctx.Err() != nil {
-			log.Printf("%v:%v%v", v.ERROR, v.RESET, "context error!! unable to reach the code further!")
-    }
-	}
-	for fileName, content := range files {
-		if err := os.WriteFile(fileName, []byte(content), 0755); err != nil {
-			log.Printf("%v:%v%v\n", v.WARN, v.RESET, "could not create " + fileName);
-		} else {
-			if delch != nil {
-				delch<-fileName;
-			}
 		}
 	}
 }
@@ -227,7 +200,7 @@ func InitPackage() {
 		log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "unable to marshal wb-package.json with scripts!");
 	} else {
 		log.Printf("%v:%v%v\n", v.SUCCESS, v.RESET, "Marshaling was successful!");
-		PrepareComponent(nil, "./", map[string]string{"wb-package.json": string(buffer)}, nil)
+		g.PrepareComponent(nil, "./", map[string]string{"wb-package.json": string(buffer)}, nil)
 		if err := createWeb(ctx); err != nil {
 			log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "UNABLE TO INITILIAZE THE PROJECT")
 		} else {
