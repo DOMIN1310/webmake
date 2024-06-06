@@ -9,7 +9,9 @@ import (
 	"encoding/json"
 )
 
-func GetScripts(ctx context.Context) v.Scripts {
+type Scripts []map[string]map[string]string;
+
+func GetScripts(ctx context.Context) Scripts {
 	if req, err := http.NewRequestWithContext(
 		ctx, 
 		"GET", 
@@ -17,22 +19,22 @@ func GetScripts(ctx context.Context) v.Scripts {
 		nil,
 	); err != nil {
 		log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "unable to get scripts request");
-		return v.Scripts{};		
+		return Scripts{};		
 	} else {
 		if res, err := http.DefaultClient.Do(req); err != nil {
 			log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "unable to get response from the request to get scripts");
-			return v.Scripts{};
+			return Scripts{};
 		} else {
 			if buffer, err := io.ReadAll(res.Body); err != nil {
 				res.Body.Close();
 				log.Printf("%v:%v%v\n", v.ERROR, v.RESET, "unable to read response");
-				return v.Scripts{};
+				return Scripts{};
 			} else {
 				defer res.Body.Close();
-				var variable v.Scripts;
+				var variable Scripts;
 				if err := json.Unmarshal(buffer, &variable); err != nil {
 					log.Printf("%v:%v%v\n", v.ERROR, v.RESET, "unable to marshal data");
-					return v.Scripts{};
+					return Scripts{};
 				} else {
 					return variable;
 				}

@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es6",                       // Use ES6 for modern browser support
+    "module": "es6",                       // Use ES6 module syntax for browser compatibility
+    "moduleResolution": "node",            // This helps resolve modules in node_modules
+    "esModuleInterop": true,               // Allows interoperability between CommonJS and ES6 modules
+    "forceConsistentCasingInFileNames": true, // Ensures consistent casing in imports
+    "strict": true,                        // Enables all strict type-checking options
+    "skipLibCheck": true,                  // Skips type checking of all declaration files
+    "removeComments": true,                // Removes comments from the output
+    "outDir": "./js",                      // Output directory for compiled JavaScript
+    "baseUrl": ".",                        // Base directory for module resolution
+    "paths": {
+      "*": ["node_modules/*", "ts/types/*"] // Optional: Handles additional module paths
+    }
+  },
+  "exclude": ["tailwind.config.js"],       // Excludes specific files from compilation
+  "include": ["./ts/**/*.ts"]              // Includes all TypeScript files in the ./ts directory
+}

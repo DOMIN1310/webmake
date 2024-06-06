@@ -67,7 +67,7 @@ func Search(ch chan string, property string, ctx context.Context){
 	}
 }
 
-func createWeb(ctx context.Context) error{
+func createWeb(ctx context.Context) error {
 	if confFile, err := os.Open("wb-package.json"); err != nil{
 		return errors.New("could not open wb-package.json, ensure it exists");	
 	} else {
@@ -175,7 +175,7 @@ func InitPackage() {
 		log.Printf("%v:%v%v\n", v.SUCCESS, v.RESET, "Marshaling was successful!");
 		g.PrepareComponent(nil, "./", map[string]string{"wb-package.json": string(buffer)}, nil)
 		if err := createWeb(ctx); err != nil {
-			log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "UNABLE TO INITILIAZE THE PROJECT")
+			log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, err.Error());
 		} else {
 			log.Printf("%v:%v%v\n", v.DONE, v.RESET, "INITIALIZATION DONE!");
 		}
