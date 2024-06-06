@@ -3,5 +3,5 @@
   "tmplindex": "public/index.php",
   "styleindex": "sass/main.scss",
   "git": false,
-  "Scripts": {}
+  "Scripts": []
 }
