@@ -3,8 +3,9 @@ package getters;
 import (
 	"os"
 	"log"
-	v "github.com/DOMIN1310/webmake/vars"
 	"context"
+
+	v "github.com/DOMIN1310/webmake/vars"
 )
 
 func PrepareComponent(delch chan string, dirName string, files map[string]string, ctx context.Context) {
@@ -14,7 +15,7 @@ func PrepareComponent(delch chan string, dirName string, files map[string]string
 				if err := os.Mkdir(dirName, 0755); err != nil {
 					log.Printf("%v:%v%v\n", v.WARN, v.RESET, "unable to create " + dirName + " directory")
 				} else {
-					log.Printf("%v:%v%v\n", v.CREATION, v.RESET, "successfully created " + dirName);
+					log.Printf("%v:%v%v\n", v.CREATION, v.RESET, "directory " + dirName + " has been created");
 				}
 			} else {
 				log.Printf("%v:%v%v\n", v.ERROR, v.RESET, "unable to check if directory exists or not!")

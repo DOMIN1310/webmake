@@ -4,8 +4,7 @@ type Template struct{
 	Findex string `json:"findex"`;
 	Tmplindex string `json:"tmplindex"`;
 	Styleindex string `json:"styleindex"`;
-	Git bool `json:"git"`;
-	Scripts []map[string]map[string]string;
+	Scripts map[string]map[string]string `json:"scripts"`;
 }
 
 var (

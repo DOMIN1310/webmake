@@ -9,9 +9,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
-	"time"
 
 	g "github.com/DOMIN1310/webmake/getters"
 	v "github.com/DOMIN1310/webmake/vars"
@@ -88,15 +86,6 @@ func createWeb(ctx context.Context) error {
 				} else {
 					log.Printf("%v:%v%v\n", v.INIT, v.RESET, "successfully initialized package.json");
 				}
-				if conf.Git {
-					if err := g.Cmd(func () *exec.Cmd {
-						return exec.Command("git", "init");
-					}()); err != nil {
-						log.Printf("%v:%v%v\n", v.ERROR, v.RESET, "unable to initialize git ensure u have git installed");
-					} else {
-						log.Printf("%v:%v%v\n", v.INIT, v.RESET,"successfully initialized git!")
-					}
-				}
 				go Search(chfile, conf.Findex, ctx);
 				go Search(chfile, conf.Styleindex, ctx);
 				go Search(chfile, conf.Tmplindex, ctx);
@@ -115,14 +104,12 @@ func createWeb(ctx context.Context) error {
 	return nil;
 }
 
-func InitPackage() {
+func InitPackage(ctx context.Context) {
 	//get inputs
 		//vars
 	var flang string;
 	var style string;
 	var tmpl string;
-	var temp string;
-	var git bool;
 	//scan them
 	fmt.Println("functional language [js, ts]: ");
 		//flang
@@ -142,12 +129,7 @@ func InitPackage() {
 	if tmpl != "html" && tmpl != "php"{
 		log.Fatalf("%v:%v%v", v.ERROR, v.RESET, "invalid option choose either html or php");
 	}
-	fmt.Println("initialize git [true, false]");
-		//git
-	fmt.Scan(&temp)
-	if b, e := strconv.ParseBool(temp); e != nil {
-		git = b;
-	}
+	//style
 	if style == "basic" {
 		style = "css/main.css";
 	} else if style == "scss" {
@@ -155,19 +137,18 @@ func InitPackage() {
 	} else if style == "tailwind" {
 		style = "css/tailwindutils.css";
 	}
+	//f
 	if flang == "ts" {
 		flang = "ts/index.ts"
 	} else if flang == "js" {
 		flang = "js/index.js"
 	}
-	var ctx, deadline = context.WithDeadline(context.Background(), time.Now().Add(10*time.Second));
-	defer deadline();
+	//ctx
 	scripts := g.GetScripts(ctx);
 	if buffer, err := json.MarshalIndent(&v.Template{
 		Findex: flang,
 		Styleindex: style,
 		Tmplindex: "public/index." + tmpl,
-		Git: git,
 		Scripts: scripts,
 	}, "", "  "); err != nil {
 		log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "unable to marshal wb-package.json with scripts!");

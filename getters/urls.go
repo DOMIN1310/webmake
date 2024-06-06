@@ -4,12 +4,13 @@ import (
 	"context"
 	"net/http"
 	"log"
-	v "github.com/DOMIN1310/webmake/vars"
 	"io"
 	"encoding/json"
+
+	v "github.com/DOMIN1310/webmake/vars"
 )
 
-type Scripts []map[string]map[string]string;
+type Scripts map[string]map[string]string;
 
 func GetScripts(ctx context.Context) Scripts {
 	if req, err := http.NewRequestWithContext(
