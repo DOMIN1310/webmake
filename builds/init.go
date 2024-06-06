@@ -74,11 +74,13 @@ func GetURLBody(url string, ctx context.Context, method string, file string) map
 	} else if ctx.Err() != nil {
 		fmt.Printf("%v:%v%v\n", v.WARN, v.RESET, "unable to complete request: context error")
 		return map[string]string{file: ""};
-	}else {
+	} else {
 		if res, err := http.DefaultClient.Do(req); err != nil {
+			res.Body.Close();
 			log.Printf("%v:%v%v\n", v.WARN, v.RESET, "unable to complete request with proper response");
 			return map[string]string{file: ""};
 		} else {
+			defer res.Body.Close();
 			if buffer, err := io.ReadAll(res.Body); err != nil {
 				log.Printf("%v:%v%v\n", v.WARN, v.RESET, "unable to read response body!");
 				return map[string]string{file: ""};
@@ -127,7 +129,7 @@ func Cmd(f *exec.Cmd) error {
 	}
 }
 
-func createWeb() error{
+func createWeb(ctx context.Context) error{
 	if confFile, err := os.Open("wb-package.json"); err != nil{
 		return errors.New("could not open wb-package.json, ensure it exists");	
 	} else {
@@ -141,8 +143,6 @@ func createWeb() error{
 				return errors.New("unmarshalation error");
 			} else {
 				var chfile chan string = make(chan string, 96);
-				var ctx, deadline = context.WithDeadline(context.Background(), time.Now().Add(10*time.Second));
-				defer deadline();
 				if err := Cmd(func() *exec.Cmd{
 					return exec.Command("pnpm", "init");
 				}()); err != nil {
@@ -175,6 +175,36 @@ func createWeb() error{
 		}
 	}
 	return nil;
+}
+
+func GetScripts(ctx context.Context) v.Scripts {
+	if req, err := http.NewRequestWithContext(
+		ctx, 
+		"GET", 
+		"https://raw.githubusercontent.com/DOMIN1310/webmake/master/res/scripts.json",
+		nil,
+	); err != nil {
+		log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "unable to get scripts request");
+		return v.Scripts{};		
+	} else {
+		if res, err := http.DefaultClient.Do(req); err != nil {
+			log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "unable to get response from the request to get scripts");
+			return v.Scripts{};
+		} else {
+			if buffer, err := io.ReadAll(res.Body); err != nil {
+				log.Printf("%v:%v%v\n", v.ERROR, v.RESET, "unable to read response");
+				return v.Scripts{};
+			} else {
+				var variable v.Scripts;
+				if err := json.Unmarshal(buffer, &variable); err != nil {
+					log.Printf("%v:%v%v\n", v.ERROR, v.RESET, "unable to marshal data");
+					return v.Scripts{};
+				} else {
+					return variable;
+				}
+			}
+		}
+	}
 }
 
 func InitPackage() {
@@ -222,23 +252,24 @@ func InitPackage() {
 	} else if flang == "js" {
 		flang = "js/index.js"
 	}
-	//marshal data
-	var buffer, err = json.MarshalIndent(&v.Template{
+	var ctx, deadline = context.WithDeadline(context.Background(), time.Now().Add(10*time.Second));
+	defer deadline();
+	scripts := GetScripts(ctx);
+	if buffer, err := json.MarshalIndent(&v.Template{
 		Findex: flang,
 		Styleindex: style,
 		Tmplindex: "public/index." + tmpl,
 		Git: git,
-	}, "", "  ");
-	//check if marshaling was successful
-	if err != nil{
-		log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, err.Error());
+	}, "", "  "); err != nil {
+		log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "unable to marshal wb-package.json with scripts!");
 	} else {
+		log.Println(scripts);
 		log.Printf("%v:%v%v\n", v.SUCCESS, v.RESET, "Marshaling was successful!");
-	}
-	PrepareComponent(nil, "./", map[string]string{"wb-package.json": string(buffer)}, nil)
-	if err := createWeb(); err != nil {
-		log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "UNABLE TO INITILIAZE THE PROJECT")
-	} else {
-		log.Printf("%v:%v%v\n", v.DONE, v.RESET, "INITIALIZATION DONE!");
+		PrepareComponent(nil, "./", map[string]string{"wb-package.json": string(buffer)}, nil)
+		if err := createWeb(ctx); err != nil {
+			log.Fatalf("%v:%v%v\n", v.ERROR, v.RESET, "UNABLE TO INITILIAZE THE PROJECT")
+		} else {
+			log.Printf("%v:%v%v\n", v.DONE, v.RESET, "INITIALIZATION DONE!");
+		}
 	}
 }

@@ -1,0 +1,9 @@
+{
+  "findex": "ts/index.ts",
+  "tmplindex": "public/index.php",
+  "styleindex": "sass/main.scss",
+  "git": false,
+  "Scripts": {
+    "scripts": null
+  }
+}

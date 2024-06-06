@@ -5,6 +5,11 @@ type Template struct{
 	Tmplindex string `json:"tmplindex"`;
 	Styleindex string `json:"styleindex"`;
 	Git bool `json:"git"`;
+	Scripts Scripts;
+}
+
+type Scripts struct{
+	Scripts map[string]map[string]string `json:"scripts"`;
 }
 
 var (
